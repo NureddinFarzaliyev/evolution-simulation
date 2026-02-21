@@ -124,6 +124,10 @@ function evolve(params: EvolveParams) {
   let globalBestDNA = "";
   let globalBestFitness = -Infinity;
 
+  // Track fitness history to adapt mutation
+  let fitnessHistory: number[] = [];
+  const fitnessHistoryMaxLength = 5;
+
   // Start evolving over generations
   for (let generation = 0; generation < maximumGenerations; generation++) {
     // Stop if perfect match is found
@@ -142,6 +146,14 @@ function evolve(params: EvolveParams) {
         generationBestFitness = fit;
         generationBestDNA = DNA;
       }
+    }
+
+    // Add generation's best fitness to history
+    fitnessHistory.push(generationBestFitness);
+    if (fitnessHistory.length > 5) {
+      fitnessHistory = fitnessHistory.slice(
+        fitnessHistory.length - fitnessHistoryMaxLength,
+      );
     }
 
     // Update globals
@@ -173,10 +185,19 @@ function evolve(params: EvolveParams) {
       // Generate child based on chosen parents
       const childDNA = generateChildDNA(parent1, parent2);
 
-      // Mutate the child by dynamically adjusting mutation rate based on generation progress
+      // Mutate the child by dynamically adjusting mutation rate based on
+      // generation progress and stagnation or very small grow on last 5 generations
       // to allow more exploration in the beginning and more exploitation in the end
+      const stagnationThreshold = 0.001;
+      const isStagnated =
+        fitnessHistory.length === fitnessHistoryMaxLength &&
+          fitnessHistory[4] - fitnessHistory[0] < stagnationThreshold
+          ? 0.01
+          : 0;
+
+      const stagnationBonus = isStagnated ? mutationRate * 0.5 : 0;
       const currentMutationRate =
-        mutationRate * (1 - generation / maximumGenerations);
+        mutationRate * (1 - generation / maximumGenerations) + stagnationBonus;
       const mutatedChildDNA = mutateChildDNA(
         childDNA,
         currentMutationRate,
@@ -197,11 +218,11 @@ function evolve(params: EvolveParams) {
 }
 
 const evolveParams: EvolveParams = {
-  targetDNA: "The quick brown fox jumps over the lazy dog",
+  targetDNA: "To be, or not to be, that is the question.",
   // targetDNA: "Hello, world!",
   symbols:
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz,!<>@#$%^&*()_+-= ",
-  mutationRate: 0.02,
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz,!<>@#$%^&*()_+-=. ",
+  mutationRate: 0.01,
   populationSize: 1000,
   maximumGenerations: 10000,
 };
