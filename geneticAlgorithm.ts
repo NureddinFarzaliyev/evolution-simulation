@@ -34,7 +34,7 @@ function generatePopulation(
 
 // Creates a new population with fittest members in given size
 // Uses Roulette wheel approach by randomly choosing DNAs from weight distributed array based on fitness of the DNA
-function chooseFittest(
+function chooseFittestRouletteWheel(
   population: string[],
   fittestPopulationSize: number,
   fitness: (DNA: string) => number,
@@ -121,32 +121,46 @@ function evolve(params: EvolveParams) {
   } = params;
   const targetFitness = targetDNA.length;
 
-  let done = false;
-
+  // Create random initial population
   let population = generatePopulation(targetFitness, symbols, populationSize);
 
-  for (let i = 0; i < maximumGenerations; i++) {
-    if (done) return;
+  // Track global best dna and fitness
+  let globalBestDNA = "";
+  let globalBestFitness = -Infinity;
+
+  // Start evolving over generations
+  for (let generation = 0; generation < maximumGenerations; generation++) {
+    if (globalBestDNA === targetDNA) break;
+
+    // Evalute fitness of current population, sort it and find best fit.
+    const evaluatedPopulation = population.map((DNA) => ({
+      DNA,
+      fit: fitness(DNA, targetDNA),
+    }));
+
+    evaluatedPopulation.sort((a, b) => b.fit - a.fit);
+
+    const bestOfGeneration = evaluatedPopulation[0];
+
+    // Update globals
+    if (bestOfGeneration.fit > globalBestFitness) {
+      globalBestFitness = bestOfGeneration.fit;
+      globalBestDNA = bestOfGeneration.DNA;
+    }
+
+    console.log(
+      `${generation} | ${globalBestDNA} | ${((globalBestFitness / targetFitness) * 100).toFixed(2)}%`,
+    );
+
+    // Get sorted population array, and build fittest population
+    // This uses Truncation Selection to choose just top k items.
+    // This method increases selection pressure.
+    const sortedPopulation = evaluatedPopulation.map((item) => item.DNA);
+    const fittestPopulation = sortedPopulation.slice(0, fittestPopulationSize);
 
     const newPopulation: string[] = [];
 
-    const fittestPopulation = chooseFittest(
-      population,
-      fittestPopulationSize,
-      (DNA) => fitness(DNA, targetDNA),
-    );
-
-    const bestFit = fittestPopulation[0];
-    const bestFitFitness = fitness(bestFit, targetDNA);
-
-    console.log(
-      `${i} | ${bestFit} | ${((bestFitFitness / targetFitness) * 100).toFixed(2)}%`,
-    );
-    if (bestFitFitness === targetFitness) {
-      done = true;
-      break;
-    }
-
+    // Generate child dnas from fittest population and assign it as new population
     for (let j = 0; j < populationSize - 2; j++) {
       const firstParentIndex = generateRandomInteger(
         0,
@@ -167,6 +181,7 @@ function evolve(params: EvolveParams) {
       newPopulation.push(mutatedChildDNA);
     }
 
+    // Elitism - preserve top 2
     newPopulation.push(fittestPopulation[0]);
     newPopulation.push(fittestPopulation[1]);
 
@@ -175,7 +190,7 @@ function evolve(params: EvolveParams) {
 }
 
 const evolveParams: EvolveParams = {
-  targetDNA: "Hello, World!",
+  targetDNA: "Hello, world!",
   symbols:
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz,!<>@#$%^&*()_+-= ",
   mutationRate: 0.01,
