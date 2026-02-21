@@ -64,24 +64,6 @@ function tournamentSelect(
   return { DNA: bestDNA!, fit: bestFitness };
 }
 
-// Creates a new evaluated population array with fittest members in given size using tournament selection
-function sortTournament(
-  population: string[],
-  fittestPopulationSize: number,
-  fitness: (DNA: string) => number,
-  tournamentSize: number = 5,
-) {
-  const resultPopulation: { DNA: string; fit: number }[] = [];
-
-  for (let i = 0; i < fittestPopulationSize; i++) {
-    resultPopulation.push(
-      tournamentSelect(population, fitness, tournamentSize),
-    );
-  }
-
-  return resultPopulation.sort((a, b) => b.fit - a.fit);
-}
-
 // Generates new child from given parents
 // Uses Davis Order Crossover by inheriting random section from a parent and remaining indexes from the other one
 function generateChildDNA(a: string, b: string) {
@@ -125,7 +107,6 @@ interface EvolveParams {
   targetDNA: string;
   symbols: string;
   populationSize: number;
-  fittestPopulationSize: number;
   mutationRate: number;
   maximumGenerations: number;
 }
@@ -133,7 +114,6 @@ interface EvolveParams {
 function evolve(params: EvolveParams) {
   const {
     maximumGenerations,
-    fittestPopulationSize,
     populationSize,
     targetDNA,
     mutationRate,
@@ -153,22 +133,28 @@ function evolve(params: EvolveParams) {
 
   // Start evolving over generations
   for (let generation = 0; generation < maximumGenerations; generation++) {
+    // Stop if perfect match is found
     if (globalBestDNA === targetDNA) break;
 
-    // build fittest population by using Tournament Selection
-    const fittestPopulation = sortTournament(
-      population,
-      fittestPopulationSize,
-      (DNA) => fitness(DNA, targetDNA),
-      5,
-    );
+    // Track generation's best dna and fitness
+    let generationBestDNA = "";
+    let generationBestFitness = -Infinity;
 
-    const bestOfGeneration = fittestPopulation[0];
+    // Evaluate best for each generation
+    for (const DNA of population) {
+      const fit = fitness(DNA, targetDNA);
+
+      // Update best in this generation
+      if (fit > generationBestFitness) {
+        generationBestFitness = fit;
+        generationBestDNA = DNA;
+      }
+    }
 
     // Update globals
-    if (bestOfGeneration.fit > globalBestFitness) {
-      globalBestFitness = bestOfGeneration.fit;
-      globalBestDNA = bestOfGeneration.DNA;
+    if (generationBestFitness > globalBestFitness) {
+      globalBestFitness = generationBestFitness;
+      globalBestDNA = generationBestDNA;
     }
 
     console.log(
@@ -177,43 +163,46 @@ function evolve(params: EvolveParams) {
 
     const newPopulation: string[] = [];
 
-    // Generate child dnas from fittest population and assign it as new population
-    for (let j = 0; j < populationSize - 2; j++) {
-      const firstParentIndex = generateRandomInteger(
-        0,
-        fittestPopulationSize - 1,
-      );
-      const secondParentIndex = generateRandomInteger(
-        0,
-        fittestPopulationSize - 1,
-        [firstParentIndex],
-      );
+    // Generate child dnas from fittest population using tournament and assign it as new population
+    for (let i = 0; i < populationSize - 2; i++) {
+      // Select two parents from the population using tournament method
+      const parent1 = tournamentSelect(
+        population,
+        (DNA) => fitness(DNA, targetDNA),
+        5,
+      ).DNA;
+      const parent2 = tournamentSelect(
+        population,
+        (DNA) => fitness(DNA, targetDNA),
+        5,
+      ).DNA;
 
-      const childDNA = generateChildDNA(
-        fittestPopulation[firstParentIndex].DNA,
-        fittestPopulation[secondParentIndex].DNA,
-      );
+      // Generate child based on chosen parents
+      const childDNA = generateChildDNA(parent1, parent2);
 
+      // Mutate the child
       const mutatedChildDNA = mutateChildDNA(childDNA, mutationRate, symbols);
+
+      // Push the child to new population
       newPopulation.push(mutatedChildDNA);
     }
 
-    // Elitism - preserve top 2
-    newPopulation.push(fittestPopulation[0].DNA);
-    newPopulation.push(fittestPopulation[1].DNA);
+    // Elitism - global best and generation best
+    newPopulation.push(globalBestDNA);
+    newPopulation.push(generationBestDNA);
 
+    // Replace old population for new generation iteration
     population = newPopulation;
   }
 }
 
 const evolveParams: EvolveParams = {
-  // targetDNA: "The quick brown fox jumps over the lazy dog",
-  targetDNA: "Hello, world!",
+  targetDNA: "The quick brown fox jumps over the lazy dog",
+  // targetDNA: "Hello, world!",
   symbols:
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz,!<>@#$%^&*()_+-= ",
   mutationRate: 0.02,
   populationSize: 1000,
-  fittestPopulationSize: 50,
   maximumGenerations: 10000,
 };
 
