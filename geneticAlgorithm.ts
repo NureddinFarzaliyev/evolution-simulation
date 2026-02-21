@@ -10,11 +10,19 @@ function generateDNA(dnaSize: number, symbols: string) {
   return newMember;
 }
 
-// Finds the fitness of the DNA to the targetDNA based on correct letters in the string
+// Finds the fitness of the DNA to the targetDNA based on correct letters and close letters in the string
 function fitness(DNA: string, targetDNA: string) {
   let fit = 0;
   for (let i = 0; i < DNA.length; i++) {
-    if (DNA[i] === targetDNA[i]) fit++;
+    const diff = Math.abs(DNA.charCodeAt(i) - targetDNA.charCodeAt(i));
+
+    // Exact match bonus
+    if (diff === 0) {
+      fit += 5;
+    }
+
+    // Closeness reward
+    fit += 1 / (1 + diff);
   }
   return fit;
 }
@@ -30,36 +38,6 @@ function generatePopulation(
     population.push(generateDNA(dnaSize, symbols));
   }
   return population;
-}
-
-// Creates a new population with fittest members in given size
-// Uses Roulette wheel approach by randomly choosing DNAs from weight distributed array based on fitness of the DNA
-function chooseFittestRouletteWheel(
-  population: string[],
-  fittestPopulationSize: number,
-  fitness: (DNA: string) => number,
-) {
-  let fitnessValues: { DNA: string; fit: number }[] = [];
-  population.forEach((DNA) => fitnessValues.push({ DNA, fit: fitness(DNA) }));
-  fitnessValues = fitnessValues.sort((a, b) => b.fit - a.fit);
-
-  const weightArray: { DNA: string; id: number }[] = [];
-
-  fitnessValues.map((item, id) => {
-    for (let i = 0; i < item.fit; i++) {
-      weightArray.push({ DNA: item.DNA, id });
-    }
-  });
-
-  const fittestPopulation: string[] = [];
-
-  for (let i = 0; i < fittestPopulationSize; i++) {
-    const randomIndex = generateRandomInteger(0, weightArray.length - 1);
-    const element = weightArray[randomIndex];
-    fittestPopulation.push(element.DNA);
-  }
-
-  return fittestPopulation;
 }
 
 // Uses Tournament method by choosing a small group from the population, and finding the most fit in that group
@@ -161,10 +139,13 @@ function evolve(params: EvolveParams) {
     mutationRate,
     symbols,
   } = params;
-  const targetFitness = targetDNA.length;
 
   // Create random initial population
-  let population = generatePopulation(targetFitness, symbols, populationSize);
+  let population = generatePopulation(
+    targetDNA.length,
+    symbols,
+    populationSize,
+  );
 
   // Track global best dna and fitness
   let globalBestDNA = "";
@@ -191,7 +172,7 @@ function evolve(params: EvolveParams) {
     }
 
     console.log(
-      `${generation} | ${globalBestDNA} | ${((globalBestFitness / targetFitness) * 100).toFixed(2)}%`,
+      `${generation} | ${globalBestDNA} | ${globalBestFitness.toFixed(2)}`,
     );
 
     const newPopulation: string[] = [];
@@ -226,10 +207,11 @@ function evolve(params: EvolveParams) {
 }
 
 const evolveParams: EvolveParams = {
-  targetDNA: "The quick brown fox jumps over the lazy dog",
+  // targetDNA: "The quick brown fox jumps over the lazy dog",
+  targetDNA: "Hello, world!",
   symbols:
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz,!<>@#$%^&*()_+-= ",
-  mutationRate: 0.01,
+  mutationRate: 0.02,
   populationSize: 1000,
   fittestPopulationSize: 50,
   maximumGenerations: 10000,
