@@ -65,24 +65,17 @@ function tournamentSelect(
 }
 
 // Generates new child from given parents
-// Uses Davis Order Crossover by inheriting random section from a parent and remaining indexes from the other one
+// Uses Uniform Crossover by inheriting a gene randomly from one of the parents.
 function generateChildDNA(a: string, b: string) {
-  const firstCrossoverPoint = generateRandomInteger(0, a.length - 2);
-  const secondCrossoverPoint = generateRandomInteger(
-    firstCrossoverPoint + 1,
-    a.length - 1,
-  );
+  let childDNA = "";
 
-  const firstParentSection = a.slice(
-    firstCrossoverPoint,
-    secondCrossoverPoint + 1,
-  );
-
-  const secondParentSection1 = b.slice(0, firstCrossoverPoint);
-  const secondParentSection2 = b.slice(secondCrossoverPoint + 1);
-
-  let childDNA =
-    secondParentSection1 + firstParentSection + secondParentSection2;
+  for (let i = 0; i < a.length; i++) {
+    if (generateRandomInteger(0, 1)) {
+      childDNA += a[i];
+    } else {
+      childDNA += b[i];
+    }
+  }
 
   return childDNA;
 }
@@ -158,7 +151,7 @@ function evolve(params: EvolveParams) {
     }
 
     console.log(
-      `${generation} | ${globalBestDNA} | ${globalBestFitness.toFixed(2)}`,
+      ` ${generation} | ${globalBestDNA} | ${globalBestFitness.toFixed(2)}`,
     );
 
     const newPopulation: string[] = [];
