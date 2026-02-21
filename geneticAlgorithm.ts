@@ -173,8 +173,15 @@ function evolve(params: EvolveParams) {
       // Generate child based on chosen parents
       const childDNA = generateChildDNA(parent1, parent2);
 
-      // Mutate the child
-      const mutatedChildDNA = mutateChildDNA(childDNA, mutationRate, symbols);
+      // Mutate the child by dynamically adjusting mutation rate based on generation progress
+      // to allow more exploration in the beginning and more exploitation in the end
+      const currentMutationRate =
+        mutationRate * (1 - generation / maximumGenerations);
+      const mutatedChildDNA = mutateChildDNA(
+        childDNA,
+        currentMutationRate,
+        symbols,
+      );
 
       // Push the child to new population
       newPopulation.push(mutatedChildDNA);
