@@ -62,6 +62,48 @@ function chooseFittestRouletteWheel(
   return fittestPopulation;
 }
 
+// Uses Tournament method by choosing a small group from the population, and finding the most fit in that group
+function tournamentSelect(
+  population: string[],
+  fitnessFn: (DNA: string) => number,
+  tournamentSize: number,
+) {
+  let bestDNA = "";
+  let bestFitness = -Infinity;
+
+  for (let i = 0; i < tournamentSize; i++) {
+    const candidate =
+      population[generateRandomInteger(0, population.length - 1)];
+
+    const candidateFitness = fitnessFn(candidate);
+
+    if (candidateFitness > bestFitness) {
+      bestFitness = candidateFitness;
+      bestDNA = candidate;
+    }
+  }
+
+  return { DNA: bestDNA!, fit: bestFitness };
+}
+
+// Creates a new evaluated population array with fittest members in given size using tournament selection
+function sortTournament(
+  population: string[],
+  fittestPopulationSize: number,
+  fitness: (DNA: string) => number,
+  tournamentSize: number = 5,
+) {
+  const resultPopulation: { DNA: string; fit: number }[] = [];
+
+  for (let i = 0; i < fittestPopulationSize; i++) {
+    resultPopulation.push(
+      tournamentSelect(population, fitness, tournamentSize),
+    );
+  }
+
+  return resultPopulation.sort((a, b) => b.fit - a.fit);
+}
+
 // Generates new child from given parents
 // Uses Davis Order Crossover by inheriting random section from a parent and remaining indexes from the other one
 function generateChildDNA(a: string, b: string) {
@@ -132,15 +174,15 @@ function evolve(params: EvolveParams) {
   for (let generation = 0; generation < maximumGenerations; generation++) {
     if (globalBestDNA === targetDNA) break;
 
-    // Evalute fitness of current population, sort it and find best fit.
-    const evaluatedPopulation = population.map((DNA) => ({
-      DNA,
-      fit: fitness(DNA, targetDNA),
-    }));
+    // build fittest population by using Tournament Selection
+    const fittestPopulation = sortTournament(
+      population,
+      fittestPopulationSize,
+      (DNA) => fitness(DNA, targetDNA),
+      5,
+    );
 
-    evaluatedPopulation.sort((a, b) => b.fit - a.fit);
-
-    const bestOfGeneration = evaluatedPopulation[0];
+    const bestOfGeneration = fittestPopulation[0];
 
     // Update globals
     if (bestOfGeneration.fit > globalBestFitness) {
@@ -151,12 +193,6 @@ function evolve(params: EvolveParams) {
     console.log(
       `${generation} | ${globalBestDNA} | ${((globalBestFitness / targetFitness) * 100).toFixed(2)}%`,
     );
-
-    // Get sorted population array, and build fittest population
-    // This uses Truncation Selection to choose just top k items.
-    // This method increases selection pressure.
-    const sortedPopulation = evaluatedPopulation.map((item) => item.DNA);
-    const fittestPopulation = sortedPopulation.slice(0, fittestPopulationSize);
 
     const newPopulation: string[] = [];
 
@@ -173,8 +209,8 @@ function evolve(params: EvolveParams) {
       );
 
       const childDNA = generateChildDNA(
-        fittestPopulation[firstParentIndex],
-        fittestPopulation[secondParentIndex],
+        fittestPopulation[firstParentIndex].DNA,
+        fittestPopulation[secondParentIndex].DNA,
       );
 
       const mutatedChildDNA = mutateChildDNA(childDNA, mutationRate, symbols);
@@ -182,15 +218,15 @@ function evolve(params: EvolveParams) {
     }
 
     // Elitism - preserve top 2
-    newPopulation.push(fittestPopulation[0]);
-    newPopulation.push(fittestPopulation[1]);
+    newPopulation.push(fittestPopulation[0].DNA);
+    newPopulation.push(fittestPopulation[1].DNA);
 
     population = newPopulation;
   }
 }
 
 const evolveParams: EvolveParams = {
-  targetDNA: "Hello, world!",
+  targetDNA: "The quick brown fox jumps over the lazy dog",
   symbols:
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz,!<>@#$%^&*()_+-= ",
   mutationRate: 0.01,
