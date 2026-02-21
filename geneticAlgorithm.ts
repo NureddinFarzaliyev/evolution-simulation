@@ -1,5 +1,6 @@
 import { checkByPercentage, generateRandomInteger } from "./utils/random";
 
+// Generates a random DNA from a given set of symbols.
 function generateDNA(dnaSize: number, symbols: string) {
   let newMember = "";
   for (let i = 0; i < dnaSize; i++) {
@@ -9,6 +10,7 @@ function generateDNA(dnaSize: number, symbols: string) {
   return newMember;
 }
 
+// Finds the fitness of the DNA to the targetDNA based on correct letters in the string
 function fitness(DNA: string, targetDNA: string) {
   let fit = 0;
   for (let i = 0; i < DNA.length; i++) {
@@ -17,6 +19,7 @@ function fitness(DNA: string, targetDNA: string) {
   return fit;
 }
 
+// Generates a population with random DNAs in given size
 function generatePopulation(
   dnaSize: number,
   symbols: string,
@@ -29,14 +32,16 @@ function generatePopulation(
   return population;
 }
 
-// Roulette Wheel Selection
+// Creates a new population with fittest members in given size
+// Uses Roulette wheel approach by randomly choosing DNAs from weight distributed array based on fitness of the DNA
 function chooseFittest(
   population: string[],
   fittestPopulationSize: number,
   fitness: (DNA: string) => number,
 ) {
-  const fitnessValues: { DNA: string; fit: number }[] = [];
+  let fitnessValues: { DNA: string; fit: number }[] = [];
   population.forEach((DNA) => fitnessValues.push({ DNA, fit: fitness(DNA) }));
+  fitnessValues = fitnessValues.sort((a, b) => b.fit - a.fit);
 
   const weightArray: { DNA: string; id: number }[] = [];
 
@@ -57,7 +62,8 @@ function chooseFittest(
   return fittestPopulation;
 }
 
-// Davis Order Crossover
+// Generates new child from given parents
+// Uses Davis Order Crossover by inheriting random section from a parent and remaining indexes from the other one
 function generateChildDNA(a: string, b: string) {
   const firstCrossoverPoint = generateRandomInteger(0, a.length - 2);
   const secondCrossoverPoint = generateRandomInteger(
@@ -79,7 +85,8 @@ function generateChildDNA(a: string, b: string) {
   return childDNA;
 }
 
-// Random mutation
+// Mutates a DNA
+// Randomly chooses a gene based on mutation rate and changes it to another random one
 function mutateChildDNA(DNA: string, mutationRate: number, symbols: string) {
   let mutatedDNA = "";
 
@@ -94,11 +101,24 @@ function mutateChildDNA(DNA: string, mutationRate: number, symbols: string) {
   return mutatedDNA;
 }
 
-function evolve(targetDNA: string, symbols: string) {
-  const populationSize = 1000;
-  const fittestPopulationSize = 50;
-  const mutationRate = 0.01;
-  const maximumGenerations = 10000;
+interface EvolveParams {
+  targetDNA: string;
+  symbols: string;
+  populationSize: number;
+  fittestPopulationSize: number;
+  mutationRate: number;
+  maximumGenerations: number;
+}
+
+function evolve(params: EvolveParams) {
+  const {
+    maximumGenerations,
+    fittestPopulationSize,
+    populationSize,
+    targetDNA,
+    mutationRate,
+    symbols,
+  } = params;
   const targetFitness = targetDNA.length;
 
   let done = false;
@@ -154,7 +174,14 @@ function evolve(targetDNA: string, symbols: string) {
   }
 }
 
-evolve(
-  "Hello, world!",
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz,!<>@#$%^&*()_+-= ",
-);
+const evolveParams: EvolveParams = {
+  targetDNA: "Hello, World!",
+  symbols:
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz,!<>@#$%^&*()_+-= ",
+  mutationRate: 0.01,
+  populationSize: 1000,
+  fittestPopulationSize: 50,
+  maximumGenerations: 10000,
+};
+
+evolve(evolveParams);
