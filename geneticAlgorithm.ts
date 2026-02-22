@@ -191,16 +191,21 @@ function evolve(params: EvolveParams) {
       // Mutate the child by dynamically adjusting mutation rate based on
       // generation progress and stagnation or very small grow on last 5 generations
       // to allow more exploration in the beginning and more exploitation in the end
+      // also considering the minimum mutation rate value.
       const stagnationThreshold = 0.001;
       const isStagnated =
         fitnessHistory.length === fitnessHistoryMaxLength &&
-        fitnessHistory[4] - fitnessHistory[0] < stagnationThreshold
+          fitnessHistory[4] - fitnessHistory[0] < stagnationThreshold
           ? 0.01
           : 0;
       const stagnationBonus = isStagnated ? mutationRate * 0.5 : 0;
 
+      const minMutation = mutationRate * 0.1;
+      const baseMutation = mutationRate * (1 - generation / maximumGenerations);
+
       const currentMutationRate =
-        mutationRate * (1 - generation / maximumGenerations) + stagnationBonus;
+        Math.max(minMutation, baseMutation) + stagnationBonus;
+
       const mutatedChildDNA = mutateChildDNA(
         childDNA,
         currentMutationRate,
