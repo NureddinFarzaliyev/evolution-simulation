@@ -1,4 +1,6 @@
-// Lavenshtein distance is a measure of the difference between two strings. It is defined as the minimum number of single-character edits (insertions, deletions, or substitutions) required to change one string into the other.
+// Levenshtein distance is a measure of the difference between two strings. It is defined as the minimum number of single-character edits (insertions, deletions, or substitutions) required to change one string into the other.
+// This distance characterizes the global alignment of two strings.
+// The needleman-wunsch algorithm is a dynamic programming algorithm for computing the global alignment of two strings. It is based on the principle of optimality, which states that the optimal solution to a problem can be constructed from optimal solutions to its subproblems.
 
 type MatrixItem = number;
 type MatrixRow = MatrixItem[];
@@ -68,7 +70,7 @@ function generateMatrix(a: Input, b: Input) {
   return { matrix, traceBackMatrix };
 }
 
-const lavenshteinDistance = (a: string, b: string) => {
+const levenshteinDistance = (a: string, b: string) => {
   const { matrix, traceBackMatrix } = generateMatrix(a, b);
   console.log(traceBackMatrix);
   console.log(matrix);
@@ -78,4 +80,4 @@ const lavenshteinDistance = (a: string, b: string) => {
 const A: Input = "benyam";
 const B: Input = "ephrem";
 
-lavenshteinDistance(A, B);
+levenshteinDistance(A, B);
