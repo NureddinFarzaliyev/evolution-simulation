@@ -1,4 +1,7 @@
-// In regular smith-waterman algorithm, we use a simple scoring scheme with match, mismatch and gap scores. However, in real life, we have more complex scoring schemes like BLOSUM62, which is a substitution matrix used for sequence alignment of proteins. It assigns different scores to different amino acid substitutions based on their observed frequencies in related proteins.
+// In regular smith-waterman algorithm, we use a simple scoring scheme with match, mismatch and gap scores.
+// However, in real life, we have more complex scoring schemes like BLOSUM62, which is a substitution matrix used for sequence alignment of proteins. It assigns different scores to different amino acid substitutions based on their observed frequencies in related proteins.
+// Also, we need to implement Gotoh's algorithm instead of regular smith-waterman to handle affine gap penalties, which are more realistic for biological sequences. In Gotoh's algorithm, we have separate matrices for gap opening and gap extension, allowing us to penalize the opening of a gap more than the extension of an existing gap.
+// While using Gotoh's we don't have to store traceback algorithm as it can be calculated
 
 import BLOSUM62 from "./data/blosum62.json";
 import { horseHemoglobin, humanHemoglobin } from "./data/proteinSequences";
@@ -7,15 +10,6 @@ type MatrixItem = number;
 type MatrixRow = MatrixItem[];
 type Matrix = MatrixRow[];
 
-enum TraceBack {
-  X = "STOP",
-  D = "D",
-  L = "L",
-  T = "T",
-}
-type TraceBackMatrixItem = TraceBack[];
-type TraceBackMatrixRow = TraceBackMatrixItem[];
-type TraceBackMatrix = TraceBackMatrixRow[];
 type TraceBackCoordinates = {
   i: number;
   j: number;
@@ -25,99 +19,148 @@ type TraceBackScore = number;
 type Input = string;
 
 function generateMatrix(a: Input, b: Input) {
-  const matrix: Matrix = [];
-  const traceBackMatrix: TraceBackMatrix = [];
+  // matrixM: Best score ending in a match/mismatch (Diagonal)
+  // matrixH: Best score ending in a gap in sequence A (Left)
+  // matrixV: Best score ending in a gap in sequence B (Top)
+  const matrixM: Matrix = [];
+  const matrixH: Matrix = [];
+  const matrixV: Matrix = [];
 
   // Scoring Scheme. We do not need match or mismatch anymore. Instead we are gonna use BLOSUM62.
-  const GAP = -1;
+  // Instead of using single GAP penalty as in Smith-Waterman,
+  // we are going to use seperate penalty values for opening a gap and extending it
+  const GAP_OPEN = -11;
+  const GAP_EXTEND = -1;
 
   let maxScore: TraceBackScore = 0;
   let maxCoords: TraceBackCoordinates = { i: 0, j: 0 };
 
   for (let i = 0; i < a.length + 1; i++) {
-    const row: MatrixRow = [];
-    const traceBackRow: TraceBackMatrixRow = [];
+    const rowM: MatrixRow = [];
+    const rowH: MatrixRow = [];
+    const rowV: MatrixRow = [];
 
     for (let j = 0; j < b.length + 1; j++) {
       if (i == 0 || j == 0) {
-        row.push(0);
-        traceBackRow.push([TraceBack.X]);
+        // Smith-Waterman initialization
+        // All matrices start at 0.
+        rowM.push(0);
+        rowH.push(0);
+        rowV.push(0);
       } else {
         const aSymbol = a[i - 1];
         const bSymbol = b[j - 1];
 
-        const top = matrix[i - 1][j] + GAP;
-        const left = row[j - 1] + GAP;
+        // Calculate vertical gap score (MatrixV)
+        // Decide: start a new gap (M + Open)
+        // or extend (V + Open)
+        const top = Math.max(
+          matrixM[i - 1][j] + GAP_OPEN,
+          matrixV[i - 1][j] + GAP_EXTEND,
+        );
+        rowV.push(top);
+
+        // Calculate horizontal gap score (MatrixH)
+        // Same logic.
+        const left = Math.max(rowM[j - 1] + GAP_OPEN, rowH[j - 1] + GAP_EXTEND);
+        rowH.push(left);
+
         // Instead of using regular match vs mismatch, we are gonna lookup the value from BLOSUM62
-        const diagonal = matrix[i - 1][j - 1] + BLOSUM62[aSymbol][bSymbol];
+        // Calculate Match Score (MatrixM)
+        // Find the best from: Diagonal move, Vertical Gap or Horizontal gap
+        const diagonal = matrixM[i - 1][j - 1] + BLOSUM62[aSymbol][bSymbol];
 
+        // Zero floor
         const add = Math.max(0, top, left, diagonal);
-        row.push(add);
+        rowM.push(add);
 
+        // Track global maximum
         if (add > maxScore) {
           maxScore = add;
           maxCoords = { i, j };
         }
-
-        const traceBackItem: TraceBack[] = [];
-        if (add > 0) {
-          if (add === diagonal) traceBackItem.push(TraceBack.D);
-          if (add === top) traceBackItem.push(TraceBack.T);
-          if (add === left) traceBackItem.push(TraceBack.L);
-        } else {
-          traceBackItem.push(TraceBack.X);
-        }
-
-        traceBackRow.push(traceBackItem);
       }
     }
 
-    matrix.push(row);
-    traceBackMatrix.push(traceBackRow);
+    matrixM.push(rowM);
+    matrixV.push(rowV);
+    matrixH.push(rowH);
   }
 
-  return { matrix, traceBackMatrix, maxCoords, maxScore };
+  return { matrixM, matrixH, matrixV, maxCoords, maxScore };
 }
 
-// After creating a traceback matrix, we can use a function to trace the most optimal alignment position and display it
+// Traceback function should be replaced with the one that asks
+// "which matrix do I take the value from"
+// instead of "which direction"
 function traceback(
-  traceBackMatrix: TraceBackMatrix,
+  matrixM: Matrix,
+  matrixH: Matrix,
+  matrixV: Matrix,
   maxCoords: TraceBackCoordinates,
   a: Input,
   b: Input,
 ) {
-  const { i, j } = maxCoords;
+  const GAP_EXTEND = -1;
 
-  let ci = i;
-  let cj = j;
-
+  let { i: ci, j: cj } = maxCoords;
   let alignedA = "";
   let alignedB = "";
 
-  while (true) {
-    const directions = traceBackMatrix[ci][cj];
-    if (directions.includes(TraceBack.X)) break;
-    const move = directions.includes(TraceBack.D) ? TraceBack.D : directions[0];
+  // Track which layer of the 3D matrix we are in
+  // Start with the match matrix, as we find the max score there
+  let currentMatrix: "M" | "H" | "V" = "M";
 
-    switch (move) {
-      case TraceBack.D:
+  while (ci > 0 && cj > 0) {
+    // if we hit 0 in the Match matrix, local alignment ends
+
+    if (currentMatrix === "M" && matrixM[ci][cj] === 0) break;
+
+    if (currentMatrix === "M") {
+      const score = BLOSUM62[a[ci - 1]][b[cj - 1]];
+
+      // Check: Did we get to this Match cell from a previous Match, or by closing a Gap?
+      if (
+        ci > 0 &&
+        cj > 0 &&
+        matrixM[ci][cj] === matrixM[ci - 1][cj - 1] + score
+      ) {
         alignedA = a[ci - 1] + alignedA;
         alignedB = b[cj - 1] + alignedB;
-        ci -= 1;
-        cj -= 1;
-        break;
-      case TraceBack.L:
-        alignedA = "-" + alignedA;
-        alignedB = b[cj - 1] + alignedB;
-        cj--;
-        break;
-      case TraceBack.T:
-        alignedA = a[ci - 1] + alignedA;
-        alignedB = "-" + alignedB;
         ci--;
+        cj--;
+        currentMatrix = "M";
+      } else if (matrixM[ci][cj] === matrixV[ci][cj]) {
+        currentMatrix = "V";
+      } else if (matrixM[ci][cj] === matrixH[ci][cj]) {
+        currentMatrix = "H";
+      } else {
         break;
-      default:
-        break;
+      }
+    } else if (currentMatrix === "V") {
+      // Check: Are we extending this vertical gap, or was it just opened from M
+      alignedA = a[ci - 1] + alignedA;
+      alignedB = "-" + alignedB;
+
+      if (ci > 0 && matrixV[ci][cj] === matrixV[ci - 1][cj] + GAP_EXTEND) {
+        ci--;
+        currentMatrix = "V"; // Stay in Vertical layer (Extend)
+      } else {
+        ci--;
+        currentMatrix = "M"; // Jump back to Match layer (Open/Close transition)
+      }
+    } else if (currentMatrix === "H") {
+      // Check: Are we extending this horizontal gap, or was it just opened from M?
+      alignedA = "-" + alignedA;
+      alignedB = b[cj - 1] + alignedB;
+
+      if (cj > 0 && matrixH[ci][cj] === matrixH[ci][cj - 1] + GAP_EXTEND) {
+        cj--;
+        currentMatrix = "H"; // Stay in Horizontal layer (Extend)
+      } else {
+        cj--;
+        currentMatrix = "M"; // Jump back to Match layer (Open/Close transition)
+      }
     }
   }
 
@@ -125,8 +168,15 @@ function traceback(
 }
 
 const smithWaterman = (a: string, b: string) => {
-  const { traceBackMatrix, maxCoords } = generateMatrix(a, b);
-  const { alignedA, alignedB } = traceback(traceBackMatrix, maxCoords, a, b);
+  const { matrixV, matrixH, matrixM, maxCoords } = generateMatrix(a, b);
+  const { alignedA, alignedB } = traceback(
+    matrixM,
+    matrixH,
+    matrixV,
+    maxCoords,
+    a,
+    b,
+  );
   console.log(`${alignedA}\n${alignedB}`);
 };
 
