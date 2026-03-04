@@ -26,6 +26,8 @@ interface AlgorithmParameters {
   scoringMatrix: Blosum62 | Pam250;
   gapOpen: number;
   gapExtend: number;
+  lambda: number;
+  k: number;
 }
 
 function generateMatrix(a: Input, b: Input, params: AlgorithmParameters) {
@@ -178,21 +180,33 @@ function traceback(
   return { alignedA, alignedB };
 }
 
-const gotoh = (a: string, b: string) => {
-  const blosumParams: AlgorithmParameters = {
-    scoringMatrix: BLOSUM62,
-    gapExtend: -1,
-    gapOpen: -11,
-  };
+function calculateStatistics(
+  rawScore: number,
+  m: number,
+  n: number,
+  params: AlgorithmParameters,
+) {
+  // Raw score is simply the sum of all match/mismatch values from the matrix minus the gap penalties
+  // The problem it creates is that it is dependent on the scoring matrix used.
+  // For example, raw score for same alignment will be higher in PAM250 than in BLOSUM62
+  // Because the values used in PAM is generally greater
 
-  const pamParams: AlgorithmParameters = {
-    scoringMatrix: PAM250,
-    gapExtend: -2,
-    gapOpen: -12,
-  };
+  const { lambda, k } = params;
 
-  const params: AlgorithmParameters = blosumParams;
+  // The bit score is used to normalize the raw score into bits of information
+  // It tells how much "information" you had to extract from the sequences to distinguish this alignment from a random one.
+  // A Bit Score of n means the alignment is 2n times more likely to be a real biological match than a random coincidence.
+  const bitScore = (lambda * rawScore - Math.log(k)) / Math.log(2);
 
+  // E-value is arguably the most important number in bioinformatics. It is a measure of statistical significance.
+  // It asks: "In a search space of this size, how many times would I see a score this high just by pure luck?"
+  // You want the E-value to be as close to zero as possible.
+  const eValue = m * n * Math.pow(2, -bitScore);
+
+  return { bitScore, eValue };
+}
+
+const gotoh = (a: string, b: string, params: AlgorithmParameters) => {
   const { matrixV, matrixH, matrixM, maxCoords, maxScore } = generateMatrix(
     a,
     b,
@@ -209,7 +223,34 @@ const gotoh = (a: string, b: string) => {
     params,
   );
 
-  console.log(`${alignedA}\n${alignedB}\n\nMax Score: ${maxScore}`);
+  const { eValue, bitScore } = calculateStatistics(
+    maxScore,
+    a.length,
+    b.length,
+    params,
+  );
+
+  console.log(`${alignedA}\n${alignedB}`);
+  console.log(
+    `\nRaw Score: ${maxScore}\nE-Value: ${eValue}\nBit Score: ${bitScore}\n`,
+  );
 };
 
-gotoh(humanHemoglobin, horseHemoglobin);
+const blosumParams: AlgorithmParameters = {
+  scoringMatrix: BLOSUM62,
+  gapExtend: -1,
+  gapOpen: -11,
+  lambda: 0.267,
+  k: 0.041,
+};
+
+const pamParams: AlgorithmParameters = {
+  scoringMatrix: PAM250,
+  gapExtend: -2,
+  gapOpen: -12,
+  lambda: 0.191,
+  k: 0.026,
+};
+
+gotoh(humanHemoglobin, horseHemoglobin, blosumParams);
+gotoh(humanHemoglobin, horseHemoglobin, pamParams);
