@@ -1,8 +1,9 @@
 // In regular smith-waterman algorithm, we use a simple scoring scheme with match, mismatch and gap scores.
-// However, in real life, we have more complex scoring schemes like PAM250, which is a substitution matrix used for sequence alignment of proteins. It assigns different scores to different amino acid substitutions based on their observed frequencies in related proteins.
+// However, in real life, we have more complex scoring schemes like BLOSUM62 or PAM250, which is a substitution matrix used for sequence alignment of proteins. It assigns different scores to different amino acid substitutions based on their observed frequencies in related proteins.
 // Also, we need to implement Gotoh's algorithm instead of regular smith-waterman to handle affine gap penalties, which are more realistic for biological sequences. In Gotoh's algorithm, we have separate matrices for gap opening and gap extension, allowing us to penalize the opening of a gap more than the extension of an existing gap.
 // While using Gotoh's we don't have to store traceback algorithm as it can be calculated
 
+import BLOSUM62 from "./data/blosum62.json";
 import PAM250 from "./data/pam250.json";
 import { horseHemoglobin, humanHemoglobin } from "./data/proteinSequences";
 
@@ -18,7 +19,16 @@ type TraceBackScore = number;
 
 type Input = string;
 
-function generateMatrix(a: Input, b: Input) {
+type Blosum62 = typeof BLOSUM62;
+type Pam250 = typeof PAM250;
+
+interface AlgorithmParameters {
+  scoringMatrix: Blosum62 | Pam250;
+  gapOpen: number;
+  gapExtend: number;
+}
+
+function generateMatrix(a: Input, b: Input, params: AlgorithmParameters) {
   // matrixM: Best score ending in a match/mismatch (Diagonal)
   // matrixH: Best score ending in a gap in sequence A (Left)
   // matrixV: Best score ending in a gap in sequence B (Top)
@@ -26,11 +36,10 @@ function generateMatrix(a: Input, b: Input) {
   const matrixH: Matrix = [];
   const matrixV: Matrix = [];
 
-  // Scoring Scheme. We do not need match or mismatch anymore. Instead we are gonna use PAM250.
+  // Scoring Scheme. We do not need match or mismatch anymore. Instead we are gonna use BLOSUM62 or PAM250
   // Instead of using single GAP penalty as in Smith-Waterman,
   // we are going to use seperate penalty values for opening a gap and extending it
-  const GAP_OPEN = -12;
-  const GAP_EXTEND = -2;
+  const { gapOpen: GAP_OPEN, gapExtend: GAP_EXTEND, scoringMatrix } = params;
 
   let maxScore: TraceBackScore = 0;
   let maxCoords: TraceBackCoordinates = { i: 0, j: 0 };
@@ -65,10 +74,11 @@ function generateMatrix(a: Input, b: Input) {
         const left = Math.max(rowM[j - 1] + GAP_OPEN, rowH[j - 1] + GAP_EXTEND);
         rowH.push(left);
 
-        // Instead of using regular match vs mismatch, we are gonna lookup the value from PAM250
+        // Instead of using regular match vs mismatch, we are gonna lookup the value from BLOSUM62 or PAM250
         // Calculate Match Score (MatrixM)
         // Find the best from: Diagonal move, Vertical Gap or Horizontal gap
-        const diagonal = matrixM[i - 1][j - 1] + PAM250[aSymbol][bSymbol];
+        const diagonal =
+          matrixM[i - 1][j - 1] + scoringMatrix[aSymbol][bSymbol];
 
         // Zero floor
         const add = Math.max(0, top, left, diagonal);
@@ -100,8 +110,9 @@ function traceback(
   maxCoords: TraceBackCoordinates,
   a: Input,
   b: Input,
+  params: AlgorithmParameters,
 ) {
-  const GAP_EXTEND = -2;
+  const { gapExtend: GAP_EXTEND, scoringMatrix } = params;
 
   let { i: ci, j: cj } = maxCoords;
   let alignedA = "";
@@ -117,7 +128,7 @@ function traceback(
     if (currentMatrix === "M" && matrixM[ci][cj] === 0) break;
 
     if (currentMatrix === "M") {
-      const score = PAM250[a[ci - 1]][b[cj - 1]];
+      const score = scoringMatrix[a[ci - 1]][b[cj - 1]];
 
       // Check: Did we get to this Match cell from a previous Match, or by closing a Gap?
       if (
@@ -167,8 +178,27 @@ function traceback(
   return { alignedA, alignedB };
 }
 
-const smithWaterman = (a: string, b: string) => {
-  const { matrixV, matrixH, matrixM, maxCoords } = generateMatrix(a, b);
+const gotoh = (a: string, b: string) => {
+  const blosumParams: AlgorithmParameters = {
+    scoringMatrix: BLOSUM62,
+    gapExtend: -1,
+    gapOpen: -11,
+  };
+
+  const pamParams: AlgorithmParameters = {
+    scoringMatrix: PAM250,
+    gapExtend: -2,
+    gapOpen: -12,
+  };
+
+  const params: AlgorithmParameters = blosumParams;
+
+  const { matrixV, matrixH, matrixM, maxCoords, maxScore } = generateMatrix(
+    a,
+    b,
+    params,
+  );
+
   const { alignedA, alignedB } = traceback(
     matrixM,
     matrixH,
@@ -176,8 +206,10 @@ const smithWaterman = (a: string, b: string) => {
     maxCoords,
     a,
     b,
+    params,
   );
-  console.log(`${alignedA}\n${alignedB}`);
+
+  console.log(`${alignedA}\n${alignedB}\n\nMax Score: ${maxScore}`);
 };
 
-smithWaterman(humanHemoglobin, horseHemoglobin);
+gotoh(humanHemoglobin, horseHemoglobin);
