@@ -1,4 +1,9 @@
-export function getEvolutionaryDistance(alignedA: string, alignedB: string) {
+import { gotoh, GotohParameters } from "../sequenceAlignment/gotohAlgorithm";
+
+function getEvolutionaryDistance(
+  alignedA: string,
+  alignedB: string,
+): { pDistance: number; jukesCantorDistance: number; totalValidSites: number } {
   let differences = 0;
   let totalValidSites = 0;
 
@@ -18,7 +23,12 @@ export function getEvolutionaryDistance(alignedA: string, alignedB: string) {
     }
   }
 
-  if (totalValidSites === 0) return 0;
+  if (totalValidSites === 0)
+    return {
+      pDistance: 0,
+      jukesCantorDistance: 0,
+      totalValidSites: 0,
+    };
 
   const p = differences / totalValidSites;
 
@@ -34,7 +44,11 @@ export function getEvolutionaryDistance(alignedA: string, alignedB: string) {
   // if p >= 0.95, the sequences are too distant for this model
   if (correctionTerm <= 0) {
     console.warn("Sequences are too divergent for Jukes-Cantor!");
-    return Infinity;
+    return {
+      pDistance: p,
+      jukesCantorDistance: Infinity,
+      totalValidSites,
+    };
   }
 
   const d = -constant * Math.log(correctionTerm);
@@ -44,4 +58,44 @@ export function getEvolutionaryDistance(alignedA: string, alignedB: string) {
     jukesCantorDistance: d,
     totalValidSites,
   };
+}
+
+export interface DistanceMatrixEntity {
+  name: string;
+  sequence: string;
+}
+
+export function buildDistanceMatrix(
+  entities: DistanceMatrixEntity[],
+  params: GotohParameters,
+) {
+  const size = entities.length;
+
+  // Initialize a square matrix filled with 0s
+  const matrix: number[][] = Array.from({ length: size }, () =>
+    Array(size).fill(0),
+  );
+
+  for (let i = 0; i < size; i++) {
+    // Start 'j' at 'i + 1' to skip the diagonal (i == j)
+    // and the already calculated lower triangle
+    for (let j = i + 1; j < size; j++) {
+      const { alignedA, alignedB } = gotoh(
+        entities[i].sequence,
+        entities[j].sequence,
+        params,
+      );
+
+      const { jukesCantorDistance } = getEvolutionaryDistance(
+        alignedA,
+        alignedB,
+      );
+
+      // Fill both symmetric spots with the same result
+      matrix[i][j] = jukesCantorDistance;
+      matrix[j][i] = jukesCantorDistance;
+    }
+  }
+
+  return matrix;
 }

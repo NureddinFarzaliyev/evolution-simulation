@@ -1,10 +1,15 @@
+import { GotohParameters } from "./core/sequenceAlignment/gotohAlgorithm";
 import {
-  gotoh,
-  GotohParameters,
-} from "./core/sequenceAlignment/gotohAlgorithm";
-import { humanHemoglobin, chimpanzeeHemoglobin } from "./data/proteinSequences";
+  humanHemoglobin,
+  chimpanzeeHemoglobin,
+  donkeyHemoglobin,
+  horseHemoglobin,
+} from "./data/proteinSequences";
 import BLOSUM62 from "./data/blosum62.json";
-import { getEvolutionaryDistance } from "./core/phylogeneticTree/phylogeneticTree";
+import {
+  buildDistanceMatrix,
+  DistanceMatrixEntity,
+} from "./core/phylogeneticTree/phylogeneticTree";
 
 // const pamParams: AlgorithmParameters = {
 //   scoringMatrix: PAM250,
@@ -22,9 +27,24 @@ const blosumParams: GotohParameters = {
   k: 0.041,
 };
 
-const gotohResult = gotoh(humanHemoglobin, chimpanzeeHemoglobin, blosumParams);
-const distance = getEvolutionaryDistance(
-  gotohResult.alignedA,
-  gotohResult.alignedB,
-);
-console.log(distance);
+const entities: DistanceMatrixEntity[] = [
+  {
+    name: "Human",
+    sequence: humanHemoglobin,
+  },
+  {
+    name: "Chimpanzee",
+    sequence: chimpanzeeHemoglobin,
+  },
+  {
+    name: "Donkey",
+    sequence: donkeyHemoglobin,
+  },
+  {
+    name: "Horse",
+    sequence: horseHemoglobin,
+  },
+];
+
+const result = buildDistanceMatrix(entities, blosumParams);
+result.forEach((c) => console.log(c));
