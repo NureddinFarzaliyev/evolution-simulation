@@ -1,6 +1,6 @@
 import {
-  AlgorithmParameters,
   gotoh,
+  GotohParameters,
 } from "./core/sequenceAlignment/gotohAlgorithm";
 import { humanHemoglobin, chimpanzeeHemoglobin } from "./data/proteinSequences";
 import BLOSUM62 from "./data/blosum62.json";
@@ -14,7 +14,7 @@ import { getEvolutionaryDistance } from "./core/phylogeneticTree/phylogeneticTre
 //   k: 0.026,
 // };
 
-const blosumParams: AlgorithmParameters = {
+const blosumParams: GotohParameters = {
   scoringMatrix: BLOSUM62,
   gapExtend: -1,
   gapOpen: -11,

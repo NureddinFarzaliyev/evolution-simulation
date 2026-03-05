@@ -21,7 +21,7 @@ type Input = string;
 type Blosum62 = typeof BLOSUM62;
 type Pam250 = typeof PAM250;
 
-export interface AlgorithmParameters {
+export interface GotohParameters {
   scoringMatrix: Blosum62 | Pam250;
   gapOpen: number;
   gapExtend: number;
@@ -29,7 +29,7 @@ export interface AlgorithmParameters {
   k: number;
 }
 
-function generateMatrix(a: Input, b: Input, params: AlgorithmParameters) {
+function generateMatrix(a: Input, b: Input, params: GotohParameters) {
   // matrixM: Best score ending in a match/mismatch (Diagonal)
   // matrixH: Best score ending in a gap in sequence A (Left)
   // matrixV: Best score ending in a gap in sequence B (Top)
@@ -111,7 +111,7 @@ function traceback(
   maxCoords: TraceBackCoordinates,
   a: Input,
   b: Input,
-  params: AlgorithmParameters,
+  params: GotohParameters,
 ) {
   const { gapExtend: GAP_EXTEND, scoringMatrix } = params;
 
@@ -183,7 +183,7 @@ function calculateStatistics(
   rawScore: number,
   m: number,
   n: number,
-  params: AlgorithmParameters,
+  params: GotohParameters,
 ) {
   // Raw score is simply the sum of all match/mismatch values from the matrix minus the gap penalties
   // The problem it creates is that it is dependent on the scoring matrix used.
@@ -205,7 +205,7 @@ function calculateStatistics(
   return { bitScore, eValue };
 }
 
-export const gotoh = (a: string, b: string, params: AlgorithmParameters) => {
+export const gotoh = (a: string, b: string, params: GotohParameters) => {
   const { matrixV, matrixH, matrixM, maxCoords, maxScore } = generateMatrix(
     a,
     b,
