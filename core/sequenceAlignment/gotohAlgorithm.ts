@@ -3,9 +3,8 @@
 // Also, we need to implement Gotoh's algorithm instead of regular smith-waterman to handle affine gap penalties, which are more realistic for biological sequences. In Gotoh's algorithm, we have separate matrices for gap opening and gap extension, allowing us to penalize the opening of a gap more than the extension of an existing gap.
 // While using Gotoh's we don't have to store traceback algorithm as it can be calculated
 
-import BLOSUM62 from "./data/blosum62.json";
-import PAM250 from "./data/pam250.json";
-import { horseHemoglobin, humanHemoglobin } from "./data/proteinSequences";
+import BLOSUM62 from "../../data/blosum62.json";
+import PAM250 from "../../data/pam250.json";
 
 type MatrixItem = number;
 type MatrixRow = MatrixItem[];
@@ -22,7 +21,7 @@ type Input = string;
 type Blosum62 = typeof BLOSUM62;
 type Pam250 = typeof PAM250;
 
-interface AlgorithmParameters {
+export interface AlgorithmParameters {
   scoringMatrix: Blosum62 | Pam250;
   gapOpen: number;
   gapExtend: number;
@@ -206,7 +205,7 @@ function calculateStatistics(
   return { bitScore, eValue };
 }
 
-const gotoh = (a: string, b: string, params: AlgorithmParameters) => {
+export const gotoh = (a: string, b: string, params: AlgorithmParameters) => {
   const { matrixV, matrixH, matrixM, maxCoords, maxScore } = generateMatrix(
     a,
     b,
@@ -230,27 +229,11 @@ const gotoh = (a: string, b: string, params: AlgorithmParameters) => {
     params,
   );
 
-  console.log(`${alignedA}\n${alignedB}`);
-  console.log(
-    `\nRaw Score: ${maxScore}\nE-Value: ${eValue}\nBit Score: ${bitScore}\n`,
-  );
+  return {
+    alignedA,
+    alignedB,
+    maxScore,
+    eValue,
+    bitScore,
+  };
 };
-
-const blosumParams: AlgorithmParameters = {
-  scoringMatrix: BLOSUM62,
-  gapExtend: -1,
-  gapOpen: -11,
-  lambda: 0.267,
-  k: 0.041,
-};
-
-const pamParams: AlgorithmParameters = {
-  scoringMatrix: PAM250,
-  gapExtend: -2,
-  gapOpen: -12,
-  lambda: 0.191,
-  k: 0.026,
-};
-
-gotoh(humanHemoglobin, horseHemoglobin, blosumParams);
-gotoh(humanHemoglobin, horseHemoglobin, pamParams);
