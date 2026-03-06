@@ -6,11 +6,11 @@ import {
   horseHemoglobin,
 } from "./data/proteinSequences";
 import BLOSUM62 from "./data/blosum62.json";
+import { buildUPGMA } from "./core/phylogeneticTree/UPGMA";
 import {
   buildDistanceMatrix,
   DistanceMatrixEntity,
-} from "./core/phylogeneticTree/phylogeneticTree";
-import { UPGMA } from "./core/phylogeneticTree/UPGMA";
+} from "./core/phylogeneticTree/distanceMatrix";
 
 // const pamParams: AlgorithmParameters = {
 //   scoringMatrix: PAM250,
@@ -50,7 +50,7 @@ const entities: DistanceMatrixEntity[] = [
 const distanceMatrix = buildDistanceMatrix(entities, blosumParams);
 distanceMatrix.forEach((c) => console.log(c));
 
-const node = UPGMA(
+const node = buildUPGMA(
   distanceMatrix,
   entities.map((e) => e.name),
 );
