@@ -4,15 +4,19 @@ import {
   chimpanzeeHemoglobin,
   donkeyHemoglobin,
   horseHemoglobin,
+  carettaHemoglobin,
+  leopardGeckoHemoglobin,
 } from "./data/proteinSequences";
 import BLOSUM62 from "./data/blosum62.json";
+// import PAM250 from "./data/pam250.json";
 import { buildUPGMA } from "./core/phylogeneticTree/UPGMA";
 import {
   buildDistanceMatrix,
   DistanceMatrixEntity,
 } from "./core/phylogeneticTree/distanceMatrix";
+import { generateNewickString } from "./core/phylogeneticTree/newick";
 
-// const pamParams: AlgorithmParameters = {
+// const pamParams: GotohParameters = {
 //   scoringMatrix: PAM250,
 //   gapExtend: -2,
 //   gapOpen: -12,
@@ -45,13 +49,22 @@ const entities: DistanceMatrixEntity[] = [
     name: "Horse",
     sequence: horseHemoglobin,
   },
+  {
+    name: "Caretta",
+    sequence: carettaHemoglobin,
+  },
+  {
+    name: "Leopard Gecko",
+    sequence: leopardGeckoHemoglobin,
+  },
 ];
 
 const distanceMatrix = buildDistanceMatrix(entities, blosumParams);
-distanceMatrix.forEach((c) => console.log(c));
 
 const node = buildUPGMA(
   distanceMatrix,
   entities.map((e) => e.name),
 );
-console.dir(node, { depth: null });
+
+const newick = generateNewickString(node);
+console.log(newick);

@@ -25,7 +25,7 @@ function findMinDistance(matrix: DistanceMatrix): {
   return { i: minI, j: minJ, minDist };
 }
 
-interface TreeNode {
+export interface TreeNode {
   name: string;
   branchLength: number;
   children: TreeNode[];
