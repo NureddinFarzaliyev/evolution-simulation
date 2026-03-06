@@ -1,5 +1,7 @@
 import { gotoh, GotohParameters } from "../sequenceAlignment/gotohAlgorithm";
 
+export type DistanceMatrix = Array<Array<number | null>>;
+
 function getEvolutionaryDistance(
   alignedA: string,
   alignedB: string,
@@ -72,8 +74,8 @@ export function buildDistanceMatrix(
   const size = entities.length;
 
   // Initialize a square matrix filled with 0s
-  const matrix: number[][] = Array.from({ length: size }, () =>
-    Array(size).fill(0),
+  const matrix: DistanceMatrix = Array.from({ length: size }, () =>
+    Array(size).fill(null),
   );
 
   for (let i = 0; i < size; i++) {
@@ -93,7 +95,6 @@ export function buildDistanceMatrix(
 
       // Fill both symmetric spots with the same result
       matrix[i][j] = jukesCantorDistance;
-      matrix[j][i] = jukesCantorDistance;
     }
   }
 

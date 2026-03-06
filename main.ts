@@ -10,6 +10,7 @@ import {
   buildDistanceMatrix,
   DistanceMatrixEntity,
 } from "./core/phylogeneticTree/phylogeneticTree";
+import { UPGMA } from "./core/phylogeneticTree/UPGMA";
 
 // const pamParams: AlgorithmParameters = {
 //   scoringMatrix: PAM250,
@@ -46,5 +47,11 @@ const entities: DistanceMatrixEntity[] = [
   },
 ];
 
-const result = buildDistanceMatrix(entities, blosumParams);
-result.forEach((c) => console.log(c));
+const distanceMatrix = buildDistanceMatrix(entities, blosumParams);
+distanceMatrix.forEach((c) => console.log(c));
+
+const node = UPGMA(
+  distanceMatrix,
+  entities.map((e) => e.name),
+);
+console.dir(node, { depth: null });
