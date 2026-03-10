@@ -4,17 +4,17 @@ import {
   chimpanzeeHemoglobin,
   donkeyHemoglobin,
   horseHemoglobin,
-  carettaHemoglobin,
-  leopardGeckoHemoglobin,
+  gorillaHemoglobin,
+  cowHemoglobin,
 } from "./data/proteinSequences";
 import BLOSUM62 from "./data/blosum62.json";
 // import PAM250 from "./data/pam250.json";
-import { buildUPGMA } from "./core/phylogeneticTree/UPGMA";
 import {
   buildDistanceMatrix,
   DistanceMatrixEntity,
 } from "./core/phylogeneticTree/distanceMatrix";
 import { generateNewickString } from "./core/phylogeneticTree/newick";
+import { buildNeighborJoining } from "./core/phylogeneticTree/neighborJoining";
 
 // const pamParams: GotohParameters = {
 //   scoringMatrix: PAM250,
@@ -42,6 +42,10 @@ const entities: DistanceMatrixEntity[] = [
     sequence: chimpanzeeHemoglobin,
   },
   {
+    name: "Gorilla",
+    sequence: gorillaHemoglobin,
+  },
+  {
     name: "Donkey",
     sequence: donkeyHemoglobin,
   },
@@ -50,21 +54,15 @@ const entities: DistanceMatrixEntity[] = [
     sequence: horseHemoglobin,
   },
   {
-    name: "Caretta",
-    sequence: carettaHemoglobin,
-  },
-  {
-    name: "Leopard Gecko",
-    sequence: leopardGeckoHemoglobin,
+    name: "Cow",
+    sequence: cowHemoglobin,
   },
 ];
+const labels = entities.map((e) => e.name);
 
 const distanceMatrix = buildDistanceMatrix(entities, blosumParams);
+console.log("DISTANCE MATRIX", distanceMatrix);
 
-const node = buildUPGMA(
-  distanceMatrix,
-  entities.map((e) => e.name),
-);
-
+const node = buildNeighborJoining(distanceMatrix, labels);
 const newick = generateNewickString(node);
 console.log(newick);
