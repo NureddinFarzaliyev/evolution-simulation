@@ -1,6 +1,16 @@
 import { DistanceMatrix } from "./distanceMatrix";
 import { TreeNode } from "./UPGMA";
 
+function getDistance(matrix: DistanceMatrix, i: number, j: number): number {
+  if (i === j) return 0;
+
+  const val = i < j ? matrix[i][j] : matrix[j][i];
+
+  if (val === null) throw new Error("Distance missing");
+
+  return val;
+}
+
 // Calculates the sum of distances from one node to all others.
 // This is used to determine if a node is an outlier
 function calculateNetDivergence(matrix: DistanceMatrix, i: number): number {
@@ -8,15 +18,8 @@ function calculateNetDivergence(matrix: DistanceMatrix, i: number): number {
   const n = matrix.length;
 
   for (let j = 0; j < n; j++) {
-    if (i === j) continue; // Skip self
-
-    // Access the symmetric value:
-    // If i < j, the value is in the upper triangle.
-    // If i > j, the value is at [j][i].
-    const val = i < j ? matrix[i][j] : matrix[j][i];
-
-    if (val !== null) {
-      sum += val;
+    if (i !== j) {
+      sum += getDistance(matrix, i, j);
     }
   }
   return sum;
@@ -37,7 +40,7 @@ function computeQMatrix(matrix: DistanceMatrix): DistanceMatrix {
   for (let i = 0; i < n; i++) {
     for (let j = i + 1; j < n; j++) {
       // Use the upper triangle value (matrix[i][j])
-      const val = matrix[i][j] || 0;
+      const val = getDistance(matrix, i, j);
 
       // NJ Formula: (n-2) * d(i,j) - sum(i) - sum(j)
       const qValue = (n - 2) * val - r[i] - r[j];
@@ -58,8 +61,9 @@ function findMinQ(qMatrix: DistanceMatrix): { i: number; j: number } {
 
   for (let i = 0; i < qMatrix.length; i++) {
     for (let j = i + 1; j < qMatrix.length; j++) {
-      if (qMatrix[i][j] !== null && qMatrix[i][j]! < minVal) {
-        minVal = qMatrix[i][j]!;
+      const value = getDistance(qMatrix, i, j);
+      if (value < minVal) {
+        minVal = value;
         minI = i;
         minJ = j;
       }
@@ -103,14 +107,16 @@ export function buildNeighborJoining(matrix: DistanceMatrix, labels: string[]) {
 
     // Formula: dist(i, parent) = 0.5 * d(i,j) + (1 / (2*(n-2))) * (rI - rJ)
     const distIParent =
-      0.5 * (currentMatrix[i][j] || 0) + (rI - rJ) / (2 * (n - 2));
-    const distJParent = (currentMatrix[i][j] || 0) - distIParent;
+      0.5 * getDistance(currentMatrix, i, j) + (rI - rJ) / (2 * (n - 2));
+    const distJParent = getDistance(currentMatrix, i, j) - distIParent;
 
     const clusterI = clusters[i];
     const clusterJ = clusters[j];
 
-    clusterI.node.branchLength = Math.max(0, distIParent); // Prevent negative lengths
-    clusterJ.node.branchLength = Math.max(0, distJParent);
+    //clusterI.node.branchLength = Math.max(0, distIParent); // Prevent negative lengths
+    //clusterJ.node.branchLength = Math.max(0, distJParent);
+    clusterI.node.branchLength = distIParent;
+    clusterJ.node.branchLength = distJParent;
 
     // Create the new parent cluster
     const newNode: TreeNode = {
@@ -152,14 +158,17 @@ export function buildNeighborJoining(matrix: DistanceMatrix, labels: string[]) {
           // NJ Distance formula to the new node:
           // d(new, k) = (d(i,k) + d(j,k) - d(i,j)) / 2
           const dist =
-            ((currentMatrix[i][k] || 0) +
-              (currentMatrix[j][k] || 0) -
-              (currentMatrix[i][j] || 0)) /
+            (getDistance(currentMatrix, i, k) +
+              getDistance(currentMatrix, j, k) -
+              getDistance(currentMatrix, i, j)) /
             2;
           nextMatrix[row][col] = dist;
         } else {
-          nextMatrix[row][col] =
-            currentMatrix[remainingIndices[row]][remainingIndices[col]];
+          nextMatrix[row][col] = getDistance(
+            currentMatrix,
+            remainingIndices[row],
+            remainingIndices[col],
+          );
         }
       }
     }
@@ -169,9 +178,9 @@ export function buildNeighborJoining(matrix: DistanceMatrix, labels: string[]) {
   }
 
   // Connect the last two nodes
-  const distFinal = currentMatrix[0][1];
-  clusters[0].node.branchLength = (distFinal || 0) / 2;
-  clusters[1].node.branchLength = (distFinal || 0) / 2;
+  const distFinal = getDistance(currentMatrix, 0, 1);
+  clusters[0].node.branchLength = distFinal / 2;
+  clusters[1].node.branchLength = distFinal / 2;
 
   const root: TreeNode = {
     name: "root",

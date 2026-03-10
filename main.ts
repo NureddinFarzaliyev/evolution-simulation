@@ -6,6 +6,9 @@ import {
   horseHemoglobin,
   gorillaHemoglobin,
   cowHemoglobin,
+  pigHemoglobin,
+  leopardGeckoHemoglobin,
+  carettaHemoglobin,
 } from "./data/proteinSequences";
 import BLOSUM62 from "./data/blosum62.json";
 // import PAM250 from "./data/pam250.json";
@@ -56,6 +59,18 @@ const entities: DistanceMatrixEntity[] = [
   {
     name: "Cow",
     sequence: cowHemoglobin,
+  },
+  {
+    name: "Pig",
+    sequence: pigHemoglobin,
+  },
+  {
+    name: "Gecko",
+    sequence: leopardGeckoHemoglobin,
+  },
+  {
+    name: "Caretta",
+    sequence: carettaHemoglobin,
   },
 ];
 const labels = entities.map((e) => e.name);
