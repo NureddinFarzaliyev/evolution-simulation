@@ -9,6 +9,13 @@ import {
   pigHemoglobin,
   leopardGeckoHemoglobin,
   carettaHemoglobin,
+  humanCOX1,
+  chimpanzeeCOX1,
+  donkeyCOX1,
+  horseCOX1,
+  gorillaCOX1,
+  pigCOX1,
+  cowCOX1,
 } from "./data/proteinSequences";
 import BLOSUM62 from "./data/blosum62.json";
 // import PAM250 from "./data/pam250.json";
@@ -35,7 +42,7 @@ const blosumParams: GotohParameters = {
   k: 0.041,
 };
 
-const entities: DistanceMatrixEntity[] = [
+const hemoglobins: DistanceMatrixEntity[] = [
   {
     name: "Human",
     sequence: humanHemoglobin,
@@ -73,11 +80,65 @@ const entities: DistanceMatrixEntity[] = [
     sequence: carettaHemoglobin,
   },
 ];
-const labels = entities.map((e) => e.name);
 
-const distanceMatrix = buildDistanceMatrix(entities, blosumParams);
-console.log("DISTANCE MATRIX", distanceMatrix);
+const cox1s: DistanceMatrixEntity[] = [
+  {
+    name: "Human",
+    sequence: humanCOX1,
+  },
+  {
+    name: "Chimpanzee",
+    sequence: chimpanzeeCOX1,
+  },
+  {
+    name: "Gorilla",
+    sequence: gorillaCOX1,
+  },
+  {
+    name: "Donkey",
+    sequence: donkeyCOX1,
+  },
+  {
+    name: "Horse",
+    sequence: horseCOX1,
+  },
+  {
+    name: "Cow",
+    sequence: cowCOX1,
+  },
+  {
+    name: "Pig",
+    sequence: pigCOX1,
+  },
+];
 
-const node = buildNeighborJoining(distanceMatrix, labels);
-const newick = generateNewickString(node);
-console.log(newick);
+interface RunParams {
+  sequences: DistanceMatrixEntity[];
+  gotohParams: GotohParameters;
+  labels: string[];
+}
+
+function main({ sequences, gotohParams, labels }: RunParams) {
+  const distanceMatrix = buildDistanceMatrix(sequences, gotohParams);
+  const node = buildNeighborJoining(distanceMatrix, labels);
+  const newick = generateNewickString(node);
+  console.log(newick);
+}
+
+console.log("Hemoglobin:");
+
+main({
+  sequences: hemoglobins,
+  gotohParams: blosumParams,
+  labels: hemoglobins.map((h) => h.name),
+});
+
+console.log("COX1:");
+
+main({
+  sequences: cox1s,
+  gotohParams: blosumParams,
+  labels: cox1s.map((h) => h.name),
+});
+
+// TODO: console.log("Cytochrome c:");
