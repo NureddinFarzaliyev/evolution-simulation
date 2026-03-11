@@ -1,4 +1,4 @@
-import { GotohParameters } from "./core/sequenceAlignment/gotohAlgorithm";
+import { GotohParameters } from "../sequenceAlignment/gotohAlgorithm";
 import {
   humanHemoglobin,
   chimpanzeeHemoglobin,
@@ -16,15 +16,15 @@ import {
   gorillaCOX1,
   pigCOX1,
   cowCOX1,
-} from "./data/proteinSequences";
-import BLOSUM62 from "./data/blosum62.json";
+} from "../../data/proteinSequences";
+import BLOSUM62 from "../../data/blosum62.json";
 // import PAM250 from "./data/pam250.json";
 import {
   buildDistanceMatrix,
   DistanceMatrixEntity,
-} from "./core/phylogeneticTree/distanceMatrix";
-import { generateNewickString } from "./core/phylogeneticTree/newick";
-import { buildNeighborJoining } from "./core/phylogeneticTree/neighborJoining";
+} from "../../core/phylogeneticTree/distanceMatrix";
+import { generateNewickString } from "../phylogeneticTree/newick";
+import { buildNeighborJoining } from "../phylogeneticTree/neighborJoining";
 
 // const pamParams: GotohParameters = {
 //   scoringMatrix: PAM250,
@@ -118,27 +118,32 @@ interface RunParams {
   labels: string[];
 }
 
-function main({ sequences, gotohParams, labels }: RunParams) {
+export function generateNewickFromEntities({
+  sequences,
+  gotohParams,
+  labels,
+}: RunParams) {
   const distanceMatrix = buildDistanceMatrix(sequences, gotohParams);
   const node = buildNeighborJoining(distanceMatrix, labels);
   const newick = generateNewickString(node);
-  console.log(newick);
+  return newick;
 }
 
-console.log("Hemoglobin:");
-
-main({
+const hNewick = generateNewickFromEntities({
   sequences: hemoglobins,
   gotohParams: blosumParams,
   labels: hemoglobins.map((h) => h.name),
 });
 
-console.log("COX1:");
-
-main({
+const coxNewick = generateNewickFromEntities({
   sequences: cox1s,
   gotohParams: blosumParams,
   labels: cox1s.map((h) => h.name),
 });
+
+// console.log("Hemoglobin:");
+// console.log(hNewick);
+// console.log("COX1:");
+// console.log(coxNewick);
 
 // TODO: console.log("Cytochrome c:");

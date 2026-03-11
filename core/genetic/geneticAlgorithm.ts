@@ -1,4 +1,4 @@
-import { checkByPercentage, generateRandomInteger } from "./utils/random";
+import { checkByPercentage, generateRandomInteger } from "../../utils/random";
 
 // Generates a random DNA from a given set of symbols.
 
