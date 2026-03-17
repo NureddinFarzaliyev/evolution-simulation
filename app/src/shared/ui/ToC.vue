@@ -3,13 +3,18 @@ import { RouterLink } from "vue-router";
 
 const routes = [
   { name: "Home", path: "/" },
-  { name: "Genetic Algorithms", path: "/genetic-alghorithms" },
+  { name: "Sources", path: "/sources" },
+  // { name: "Genetic Algorithms", path: "/genetic-algorithms" },
+  { name: "Genetic Algorithms", path: "/genetic-algorithms-implementation" },
   { name: "Sequence Alignment", path: "/sequence-alignment" },
 ];
 </script>
 
 <template>
-  <RouterLink v-for="route in routes" :key="route.path" :to="route.path">
-    {{ route.name }}
-  </RouterLink>
+  <div class="flex flex-col gap-2">
+    <h3>Table of Contents</h3>
+    <RouterLink v-for="route in routes" :key="route.path" :to="route.path">
+      {{ route.name }}
+    </RouterLink>
+  </div>
 </template>

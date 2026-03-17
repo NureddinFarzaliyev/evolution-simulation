@@ -110,7 +110,7 @@ function mutateChildDNA(DNA: DNA, mutationRate: number, symbols: string) {
   return mutatedDNA;
 }
 
-interface EvolveParams {
+export interface EvolveParams {
   targetDNA: DNA;
   symbols: string;
   populationSize: number;
@@ -118,7 +118,7 @@ interface EvolveParams {
   maximumGenerations: number;
 }
 
-function evolve(params: EvolveParams) {
+export function evolve(params: EvolveParams) {
   const {
     maximumGenerations,
     populationSize,

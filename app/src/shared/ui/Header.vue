@@ -8,8 +8,5 @@ import ToC from "@/shared/ui/ToC.vue";
   >
     Evolution Simulation with Genetic Algorithms, Sequence Alignment Theory and
     Phylogenetic Tree Builder - Nureddin Farzaliyev
-    <div class="flex gap-4 justify-center flex-wrap">
-      <ToC />
-    </div>
   </header>
 </template>

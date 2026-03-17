@@ -1,13 +1,30 @@
 <script setup lang="ts">
 import Header from "@/shared/ui/Header.vue";
+import Sidebar from "@/shared/ui/Sidebar.vue";
+import { useSidebar } from "@/stores/sidebarStore";
+import classNames from "classnames";
+import { computed } from "vue";
 import { RouterView } from "vue-router";
+
+const sidebar = useSidebar();
+
+const layoutClass = computed(() =>
+  classNames("flex-1 lg:ml-80", {
+    "max-lg:max-h-dvh max-lg:overflow-hidden": sidebar.isOpen,
+  }),
+);
 </script>
 
 <template>
-  <div className="min-h-screen bg-bg-primary text-text-primary font-primary">
-    <Header />
-    <div class="p-4 lg:px-10">
-      <RouterView />
+  <div
+    className="min-h-screen bg-bg-primary text-text-primary font-primary flex"
+  >
+    <Sidebar />
+    <div :class="layoutClass">
+      <Header />
+      <main class="px-6 pb-20">
+        <RouterView />
+      </main>
     </div>
   </div>
 </template>
@@ -30,7 +47,7 @@ import { RouterView } from "vue-router";
 }
 
 @utility h1 {
-  @apply text-2xl lg:text-4xl font-bold my-6 lg:mb-10 max-w-4xl mx-auto;
+  @apply text-2xl lg:text-4xl font-bold my-6 lg:mb-10 max-w-4xl mx-auto text-center;
 }
 
 h1 {

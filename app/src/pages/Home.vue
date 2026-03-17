@@ -26,7 +26,6 @@ import ToC from "@/shared/ui/ToC.vue";
         GitHub </a
       >.
     </p>
-    <h3>Table of Contents</h3>
     <div class="flex flex-col gap-2">
       <ToC />
     </div>
