@@ -118,7 +118,16 @@ export interface EvolveParams {
   maximumGenerations: number;
 }
 
-export function evolve(params: EvolveParams) {
+export interface UpdateData {
+  generation: number;
+  bestDNA: DNA;
+  bestFitness: Fit;
+}
+
+export async function evolve(
+  params: EvolveParams,
+  onUpdate?: (data: UpdateData) => void,
+) {
   const {
     maximumGenerations,
     populationSize,
@@ -173,9 +182,17 @@ export function evolve(params: EvolveParams) {
       globalBest.DNA = generationBest.DNA;
     }
 
-    console.log(
-      ` ${generation} | ${globalBest.DNA} | ${globalBest.fit.toFixed(2)}`,
-    );
+    // console.log(
+    //   ` ${generation} | ${globalBest.DNA} | ${globalBest.fit.toFixed(2)}`,
+    // );
+    if (onUpdate) {
+      onUpdate({
+        generation,
+        bestDNA: globalBest.DNA,
+        bestFitness: globalBest.fit,
+      });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
 
     const newPopulation: Population = [];
 
@@ -227,14 +244,14 @@ export function evolve(params: EvolveParams) {
   }
 }
 
-const evolveParams: EvolveParams = {
-  targetDNA: "To be, or not to be, that is the question.",
-  // targetDNA: "Hello, world!",
-  symbols:
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz,!<>@#$%^&*()_+-=. ",
-  mutationRate: 0.01,
-  populationSize: 1000,
-  maximumGenerations: 10000,
-};
-
-evolve(evolveParams);
+// const evolveParams: EvolveParams = {
+//   targetDNA: "To be, or not to be, that is the question.",
+//   // targetDNA: "Hello, world!",
+//   symbols:
+//     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz,!<>@#$%^&*()_+-=. ",
+//   mutationRate: 0.01,
+//   populationSize: 1000,
+//   maximumGenerations: 10000,
+// };
+//
+// evolve(evolveParams);

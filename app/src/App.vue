@@ -93,4 +93,44 @@ ul {
 ol {
   @apply ol;
 }
+
+@utility td {
+  @apply border border-bg-secondary px-4 py-2 text-text-primary;
+}
+
+td {
+  @apply td;
+}
+
+@utility th {
+  @apply border border-bg-secondary px-4 py-2 text-text-primary bg-bg-secondary;
+}
+
+th {
+  @apply th;
+}
+
+@utility input {
+  @apply bg-bg-secondary text-text-primary border border-bg-secondary rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent text-base lg:text-lg;
+}
+
+input {
+  @apply input;
+}
+
+@utility label {
+  @apply text-base lg:text-lg text-text-primary mb-1;
+}
+
+label {
+  @apply label;
+}
+
+@utility button {
+  @apply bg-accent text-bg-primary font-medium rounded px-4 py-2 hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent text-base lg:text-lg;
+}
+
+button {
+  @apply button;
+}
 </style>

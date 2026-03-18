@@ -4,8 +4,8 @@ import { RouterLink } from "vue-router";
 const routes = [
   { name: "Home", path: "/" },
   { name: "Sources", path: "/sources" },
-  // { name: "Genetic Algorithms", path: "/genetic-algorithms" },
-  { name: "Genetic Algorithms", path: "/genetic-algorithms-implementation" },
+  { name: "Genetic Algorithms", path: "/genetic-algorithms" },
+  { name: "GA Implementation", path: "/genetic-algorithms-implementation" },
   { name: "Sequence Alignment", path: "/sequence-alignment" },
 ];
 </script>
