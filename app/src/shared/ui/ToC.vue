@@ -7,6 +7,10 @@ const routes = [
   { name: "Genetic Algorithms", path: "/genetic-algorithms" },
   { name: "GA Implementation", path: "/genetic-algorithms-implementation" },
   { name: "Sequence Alignment", path: "/sequence-alignment" },
+  {
+    name: "Sequence Alignment Implementation",
+    path: "/sequence-alignment-implementation",
+  },
 ];
 </script>
 

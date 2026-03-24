@@ -257,7 +257,7 @@ function fitness(DNA: DNA, targetDNA: DNA): Fit {
     </p>
 
     <NextChapterBlock
-      url="/genetic-algorithms/implementation"
+      url="/genetic-algorithms-implementation"
       title="Implementation of Genetic Algorithm"
     />
   </div>
