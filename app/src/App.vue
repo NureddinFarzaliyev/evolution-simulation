@@ -22,7 +22,7 @@ const layoutClass = computed(() =>
     <Sidebar />
     <div :class="layoutClass">
       <Header />
-      <main class="px-6 pb-20">
+      <main class="px-6 pb-20 bg-bg-primary">
         <RouterView />
       </main>
     </div>
@@ -127,7 +127,7 @@ label {
 }
 
 @utility button {
-  @apply bg-accent text-bg-primary font-medium rounded px-4 py-2 hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent text-base lg:text-lg;
+  @apply bg-accent text-bg-primary font-medium rounded px-4 py-2 hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent text-base lg:text-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-accent;
 }
 
 button {

@@ -11,6 +11,11 @@ const routes = [
     name: "Sequence Alignment Implementation",
     path: "/sequence-alignment-implementation",
   },
+  { name: "Simulation", path: "/simulation" },
+  {
+    name: "Simulation Implementation",
+    path: "/simulation-implementation",
+  },
 ];
 </script>
 

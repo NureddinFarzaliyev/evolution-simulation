@@ -85,7 +85,7 @@ interface SimulationLeaf {
   sequence: string;
 }
 
-interface SimulateEvolutionParams {
+export interface SimulateEvolutionParams {
   seed: string;
   mutationRate: number;
   depth: number;

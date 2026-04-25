@@ -81,7 +81,7 @@ const align = async () => {
       placeholder="Enter k parameter"
     />
     <button
-      class="mt-4 px-4 py-2 bg-accent text-white rounded hover:bg-accent-dark disabled:opacity-50"
+      class="mt-4 px-4 py-2 bg-accent text-white rounded hover:bg-accent-dark"
       @click="align"
       :disabled="loading"
     >

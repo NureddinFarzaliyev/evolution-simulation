@@ -112,7 +112,7 @@ const cox1s: DistanceMatrixEntity[] = [
   },
 ];
 
-interface RunParams {
+export interface RunParams {
   sequences: DistanceMatrixEntity[];
   gotohParams: GotohParameters;
   labels: string[];
