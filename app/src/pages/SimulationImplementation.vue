@@ -7,6 +7,7 @@ import PhyloTree from "@/shared/ui/PhyloTree.vue";
 
 const loading = ref(false);
 const newick = ref<string>("");
+const trueNewick = ref<string>("");
 const sequences = ref<{ name: string; sequence: string }[]>([]);
 
 const params = ref<SimulateEvolutionParams>({
@@ -35,6 +36,7 @@ const simulate = async () => {
 
     const result = await response.json();
     newick.value = result.newick;
+    trueNewick.value = result.trueNewick;
     sequences.value = result.sequences;
   } catch (error) {
     console.error("Error fetching simulation result:", error);
@@ -91,12 +93,20 @@ const simulate = async () => {
           </tr>
         </tbody>
       </table>
-      <h3>Newick String:</h3>
-      <p>{{ newick }}</p>
       <h3>Built Phylogenetic Tree Visualization:</h3>
+      <p>{{ newick }}</p>
       <div>
         <PhyloTree :newick="newick" :width="1200" :show-branch-lengths="true" />
       </div>
+      <h3>True Newick String (for comparison):</h3>
+      <p>{{ trueNewick }}</p>
+      <p>
+        <PhyloTree
+          :newick="trueNewick"
+          :width="1200"
+          :show-branch-lengths="true"
+        />
+      </p>
     </div>
   </div>
 </template>

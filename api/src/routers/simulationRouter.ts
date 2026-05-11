@@ -55,7 +55,7 @@ simulationRouter.get("/", async (req: Request, res: Response) => {
     return;
   }
 
-  const simulationResults = simulateEvolution(value);
+  const { leaves: simulationResults, newickString } = simulateEvolution(value);
 
   const newickParams: RunParams = {
     sequences: simulationResults,
@@ -67,6 +67,7 @@ simulationRouter.get("/", async (req: Request, res: Response) => {
 
   res.json({
     newick: generatedNewick,
+    trueNewick: newickString,
     sequences: simulationResults,
   });
 });

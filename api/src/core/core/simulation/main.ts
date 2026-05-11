@@ -20,9 +20,9 @@ function main() {
   };
 
   const generatedNewick = generateNewickFromEntities({
-    sequences: simulationResults,
+    sequences: simulationResults.leaves,
     gotohParams: blosumParams,
-    labels: simulationResults.map((e) => e.name),
+    labels: simulationResults.leaves.map((e) => e.name),
   });
 
   console.log(generatedNewick);

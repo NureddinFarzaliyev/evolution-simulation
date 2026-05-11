@@ -85,6 +85,34 @@ interface SimulationLeaf {
   sequence: string;
 }
 
+function branchLength(
+  mutationsPerBranch: number,
+  mutationRate: number,
+): number {
+  return mutationsPerBranch * mutationRate;
+}
+
+export type NewickNode =
+  | { kind: "leaf"; name: string; length: number }
+  | { kind: "internal"; children: [NewickNode, NewickNode]; length: number };
+
+function toNewick(node: NewickNode, isRoot = true): string {
+  const lengthSuffix = isRoot ? "" : `:${node.length.toFixed(4)}`;
+
+  if (node.kind === "leaf") {
+    return `${node.name}${lengthSuffix}`;
+  }
+
+  const [left, right] = node.children;
+  return `(${toNewick(left, false)},${toNewick(right, false)})${lengthSuffix}`;
+}
+
+export interface SimulateEvolutionResult {
+  newick: NewickNode;
+  newickString?: string;
+  leaves: SimulationLeaf[];
+}
+
 export interface SimulateEvolutionParams {
   seed: string;
   mutationRate: number;
@@ -96,8 +124,10 @@ export interface SimulateEvolutionParams {
 // Recursive tree generation
 export function simulateEvolution(
   params: SimulateEvolutionParams,
-): SimulationLeaf[] {
+): SimulateEvolutionResult {
   const { seed, mutationRate, depth, mutationsPerBranch, name = "" } = params;
+
+  const len = branchLength(mutationsPerBranch, mutationRate);
 
   const evolvedSeed = simulateBranchDrift(
     seed,
@@ -107,7 +137,11 @@ export function simulateEvolution(
 
   // If base, return this species
   if (depth === 0) {
-    return [{ name, sequence: evolvedSeed }];
+    const leaf: NewickNode = { kind: "leaf", name, length: len };
+    return {
+      leaves: [{ name, sequence: evolvedSeed }],
+      newick: leaf,
+    };
   }
 
   // Recursive speciate
@@ -129,6 +163,17 @@ export function simulateEvolution(
     name: name + "R",
   });
 
+  // Create an internal node for this speciation event
+  const internalNode: NewickNode = {
+    kind: "internal",
+    length: len,
+    children: [leftLineage.newick, rightLineage.newick],
+  };
+
   // Combine and return all modern species found in the sub-branches
-  return [...leftLineage, ...rightLineage];
+  return {
+    newick: internalNode,
+    newickString: toNewick(internalNode),
+    leaves: [...leftLineage.leaves, ...rightLineage.leaves],
+  };
 }
